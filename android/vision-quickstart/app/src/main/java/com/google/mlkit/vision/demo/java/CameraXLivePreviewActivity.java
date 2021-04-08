@@ -108,7 +108,8 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
   @Nullable private VisionImageProcessor imageProcessor;
   private boolean needUpdateGraphicOverlayImageSourceInfo;
 
-  private String selectedModel = OBJECT_DETECTION;
+  //private String selectedModel = OBJECT_DETECTION;
+  private String selectedModel = POSE_DETECTION;
   private int lensFacing = CameraSelector.LENS_FACING_BACK;
   private CameraSelector cameraSelector;
 
@@ -144,6 +145,7 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
 
     Spinner spinner = findViewById(R.id.spinner);
     List<String> options = new ArrayList<>();
+    /*
     options.add(OBJECT_DETECTION);
     options.add(OBJECT_DETECTION_CUSTOM);
     options.add(CUSTOM_AUTOML_OBJECT_DETECTION);
@@ -153,6 +155,8 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
     options.add(IMAGE_LABELING);
     options.add(IMAGE_LABELING_CUSTOM);
     options.add(CUSTOM_AUTOML_LABELING);
+
+     */
     options.add(POSE_DETECTION);
     options.add(SELFIE_SEGMENTATION);
 
@@ -372,6 +376,7 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
           imageProcessor = new LabelDetectorProcessor(this, customAutoMLLabelOptions);
           break;
         case POSE_DETECTION:
+          Log.w(TAG, "VIJESH : POSE_DETECTION");
           PoseDetectorOptionsBase poseDetectorOptions =
               PreferenceUtils.getPoseDetectorOptionsForLivePreview(this);
           boolean shouldShowInFrameLikelihood =

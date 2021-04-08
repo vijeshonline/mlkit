@@ -17,8 +17,10 @@
 package com.google.mlkit.vision.demo.java.posedetector;
 
 import android.content.Context;
-import androidx.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import com.google.android.gms.tasks.Task;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.demo.GraphicOverlay;
@@ -28,6 +30,7 @@ import com.google.mlkit.vision.pose.Pose;
 import com.google.mlkit.vision.pose.PoseDetection;
 import com.google.mlkit.vision.pose.PoseDetector;
 import com.google.mlkit.vision.pose.PoseDetectorOptionsBase;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -97,6 +100,7 @@ public class PoseDetectorProcessor
 
   @Override
   protected Task<PoseWithClassification> detectInImage(InputImage image) {
+    Log.w(TAG, "VIJESH detectInImage");
     return detector
         .process(image)
         .continueWith(
@@ -105,6 +109,7 @@ public class PoseDetectorProcessor
               Pose pose = task.getResult();
               List<String> classificationResult = new ArrayList<>();
               if (runClassification) {
+                Log.w(TAG, "VIJESH : Classifying......");
                 if (poseClassifierProcessor == null) {
                   poseClassifierProcessor = new PoseClassifierProcessor(context, isStreamMode);
                 }
@@ -118,6 +123,8 @@ public class PoseDetectorProcessor
   protected void onSuccess(
       @NonNull PoseWithClassification poseWithClassification,
       @NonNull GraphicOverlay graphicOverlay) {
+
+    Log.w(TAG, "VIJESH onsuccess");
     graphicOverlay.add(
         new PoseGraphic(
             graphicOverlay, poseWithClassification.pose, showInFrameLikelihood, visualizeZ,
@@ -127,5 +134,6 @@ public class PoseDetectorProcessor
   @Override
   protected void onFailure(@NonNull Exception e) {
     Log.e(TAG, "Pose detection failed!", e);
+    Log.e(TAG, "VIJESH Pose detection failed!", e);
   }
 }

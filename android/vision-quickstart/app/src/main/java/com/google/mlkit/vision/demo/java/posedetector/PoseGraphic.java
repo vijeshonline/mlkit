@@ -23,6 +23,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.util.Log;
+
 import com.google.common.primitives.Ints;
 import com.google.mlkit.vision.common.PointF3D;
 import com.google.mlkit.vision.demo.GraphicOverlay;
@@ -86,6 +88,7 @@ public class PoseGraphic extends Graphic {
 
   @Override
   public void draw(Canvas canvas) {
+    Log.w("PoseGraphic","VIJESH: Draw" );
     List<PoseLandmark> landmarks = pose.getAllPoseLandmarks();
     if (landmarks.isEmpty()) {
       return;
@@ -135,7 +138,29 @@ public class PoseGraphic extends Graphic {
     PoseLandmark rightHeel = pose.getPoseLandmark(PoseLandmark.RIGHT_HEEL);
     PoseLandmark leftFootIndex = pose.getPoseLandmark(PoseLandmark.LEFT_FOOT_INDEX);
     PoseLandmark rightFootIndex = pose.getPoseLandmark(PoseLandmark.RIGHT_FOOT_INDEX);
+//VIJESH
+    PoseLandmark rightEye = pose.getPoseLandmark(PoseLandmark.RIGHT_EYE);
+    printMyData("RIGHT WRIST", rightWrist);
+    printMyData("LEFT WRIST",leftWrist);
+    printMyData("RIGHT EYE", rightEye);
+    String handLocation;
+    if(rightWrist.getPosition().y < rightEye.getPosition().y){
+      Log.i("PoseGraphic","VIJESH: right hand is above >>>>>>>>>>>>>>>>>");
+      handLocation = "ABOVE";
+    }else{
+      Log.i("PoseGraphic","VIJESH: right hand is BELOW EYE >>>>>>>>>>>>>>>>>");
+      handLocation = "BELOW";
+    }
 
+
+    canvas.drawText(
+            handLocation,
+            translateX(rightWrist.getPosition().x),
+            translateY(rightWrist.getPosition().y),
+            whitePaint);
+
+//VIJESH
+/*
     drawLine(canvas, leftShoulder, rightShoulder, whitePaint);
     drawLine(canvas, leftHip, rightHip, whitePaint);
 
@@ -175,6 +200,15 @@ public class PoseGraphic extends Graphic {
             whitePaint);
       }
     }
+ */
+  }
+
+  private void printMyData(String id_tag, PoseLandmark rightWrist) {
+
+    PointF point = rightWrist.getPosition();
+    float x = translateX(point.x);
+    float y = translateY(point.y);
+    Log.i("PoseGraphic:PrintMyData", "VIJESH : "+ id_tag + " x = " + x + " y = " + y );
   }
 
   void drawPoint(Canvas canvas, PoseLandmark landmark, Paint paint) {

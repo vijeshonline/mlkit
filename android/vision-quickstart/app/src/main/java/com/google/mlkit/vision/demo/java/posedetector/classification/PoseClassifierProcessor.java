@@ -67,6 +67,7 @@ public class PoseClassifierProcessor {
   }
 
   private void loadPoseSamples(Context context) {
+    Log.i(TAG,"VIJESH loadposeSamples....");
     List<PoseSample> poseSamples = new ArrayList<>();
     try {
       BufferedReader reader = new BufferedReader(
@@ -101,6 +102,7 @@ public class PoseClassifierProcessor {
    */
   @WorkerThread
   public List<String> getPoseResult(Pose pose) {
+    Log.i(TAG,"VIJESH getposeresult....");
     Preconditions.checkState(Looper.myLooper() != Looper.getMainLooper());
     List<String> result = new ArrayList<>();
     ClassificationResult classification = poseClassifier.classify(pose);
