@@ -110,7 +110,7 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
 
   //private String selectedModel = OBJECT_DETECTION;
   private String selectedModel = POSE_DETECTION;
-  private int lensFacing = CameraSelector.LENS_FACING_BACK;
+  private int lensFacing = CameraSelector.LENS_FACING_FRONT;
   private CameraSelector cameraSelector;
 
   @Override

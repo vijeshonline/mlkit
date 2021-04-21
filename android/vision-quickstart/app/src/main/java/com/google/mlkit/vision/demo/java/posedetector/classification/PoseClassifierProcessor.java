@@ -36,7 +36,8 @@ import java.util.Locale;
  */
 public class PoseClassifierProcessor {
   private static final String TAG = "PoseClassifierProcessor";
-  private static final String POSE_SAMPLES_FILE = "pose/fitness_pose_samples.csv";
+  //private static final String POSE_SAMPLES_FILE = "pose/fitness_pose_samples.csv";
+  private static final String POSE_SAMPLES_FILE = "pose/handsup-handsdown.csv";
 
   // Specify classes for which we want rep counting.
   // These are the labels in the given {@code POSE_SAMPLES_FILE}. You can set your own class labels
@@ -126,7 +127,7 @@ public class PoseClassifierProcessor {
           ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
           tg.startTone(ToneGenerator.TONE_PROP_BEEP);
           lastRepResult = String.format(
-              Locale.US, "%s : %d reps", repCounter.getClassName(), repsAfter);
+              Locale.US, "<%s> : [%d] reps", repCounter.getClassName(), repsAfter);
           break;
         }
       }
@@ -138,7 +139,7 @@ public class PoseClassifierProcessor {
       String maxConfidenceClass = classification.getMaxConfidenceClass();
       String maxConfidenceClassResult = String.format(
           Locale.US,
-          "%s : %.2f confidence",
+          "<%s> : [%.2f] confidence",
           maxConfidenceClass,
           classification.getClassConfidence(maxConfidenceClass)
               / poseClassifier.confidenceRange());

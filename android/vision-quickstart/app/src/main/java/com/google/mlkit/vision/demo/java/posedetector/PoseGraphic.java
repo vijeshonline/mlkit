@@ -19,10 +19,12 @@ package com.google.mlkit.vision.demo.java.posedetector;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.media.AudioManager;
 import android.util.Log;
 
 import com.google.common.primitives.Ints;
@@ -54,6 +56,8 @@ public class PoseGraphic extends Graphic {
   private final Paint leftPaint;
   private final Paint rightPaint;
   private final Paint whitePaint;
+  AudioManager audioManager;
+
 
   PoseGraphic(
       GraphicOverlay overlay,
@@ -84,6 +88,7 @@ public class PoseGraphic extends Graphic {
     rightPaint = new Paint();
     rightPaint.setStrokeWidth(STROKE_WIDTH);
     rightPaint.setColor(Color.YELLOW);
+    audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
   }
 
   @Override
@@ -95,16 +100,21 @@ public class PoseGraphic extends Graphic {
     }
 
     // Draw pose classification text.
-    float classificationX = POSE_CLASSIFICATION_TEXT_SIZE * 0.5f;
-    for (int i = 0; i < poseClassification.size(); i++) {
-      float classificationY = (canvas.getHeight() - POSE_CLASSIFICATION_TEXT_SIZE * 1.5f
-          * (poseClassification.size() - i));
-      canvas.drawText(
-          poseClassification.get(i),
-          classificationX,
-          classificationY,
-          classificationTextPaint);
-    }
+//    float classificationX = POSE_CLASSIFICATION_TEXT_SIZE * 0.5f;
+//    for (int i = 0; i < poseClassification.size(); i++) {
+//      float classificationY = (canvas.getHeight() - POSE_CLASSIFICATION_TEXT_SIZE * 1.5f
+//          * (poseClassification.size() - i));
+//      //VIJESH
+////      handleVolumeControl(poseClassification.get(i));
+////      String str = getPoseType(poseClassification.get(i)); //Show action only
+//      String str = poseClassification.get(i); //show confidence and action
+//      //VIJESH
+//      canvas.drawText(
+//          str,
+//          classificationX,
+//          classificationY,
+//          classificationTextPaint);
+//    }
 
     // Draw all the points
     for (PoseLandmark landmark : landmarks) {
@@ -139,25 +149,45 @@ public class PoseGraphic extends Graphic {
     PoseLandmark leftFootIndex = pose.getPoseLandmark(PoseLandmark.LEFT_FOOT_INDEX);
     PoseLandmark rightFootIndex = pose.getPoseLandmark(PoseLandmark.RIGHT_FOOT_INDEX);
 //VIJESH
-    PoseLandmark rightEye = pose.getPoseLandmark(PoseLandmark.RIGHT_EYE);
-    printMyData("RIGHT WRIST", rightWrist);
-    printMyData("LEFT WRIST",leftWrist);
-    printMyData("RIGHT EYE", rightEye);
+
+//    PoseLandmark rightEye = pose.getPoseLandmark(PoseLandmark.RIGHT_EYE);
+//    printMyData("RIGHT WRIST", rightWrist);
+//    printMyData("LEFT WRIST",leftWrist);
+//    printMyData("RIGHT EYE", rightEye);
     String handLocation;
-    if(rightWrist.getPosition().y < rightEye.getPosition().y){
+    String displayMessage = "Volume No-Change.....";
+    Log.i("PoseGraphic","VIJESH: right Wrist: " + rightWrist.getPosition().y + " Shoulder: " +rightShoulder.getPosition().y );
+    if(rightWrist.getPosition().y < rightShoulder.getPosition().y){
       Log.i("PoseGraphic","VIJESH: right hand is above >>>>>>>>>>>>>>>>>");
       handLocation = "ABOVE";
-    }else{
-      Log.i("PoseGraphic","VIJESH: right hand is BELOW EYE >>>>>>>>>>>>>>>>>");
-      handLocation = "BELOW";
+      displayMessage = "Volume UP";
+      audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND);
+    }else if(rightWrist.getPosition().y > (rightShoulder.getPosition().y)) {
+      if(rightWrist.getPosition().y < (rightShoulder.getPosition().y + 100)) {
+        Log.i("PoseGraphic", "VIJESH: right hand is BELOW SHOULDER >>>>>>>>>>>>>>>>>");
+        handLocation = "BELOW";
+        displayMessage = "Volume DOWN";
+        audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND);
+      }else{
+        Log.i("PoseGraphic", "VIJESH: right hand is very low");
+        displayMessage = "Volume No-Change.....";
+      }
     }
 
-
+    // Draw pose classification text.
+    float classificationX = POSE_CLASSIFICATION_TEXT_SIZE * 0.5f;
+    float classificationY = (canvas.getHeight() - POSE_CLASSIFICATION_TEXT_SIZE * 1.5f
+            * (poseClassification.size()));
     canvas.drawText(
-            handLocation,
-            translateX(rightWrist.getPosition().x),
-            translateY(rightWrist.getPosition().y),
-            whitePaint);
+            displayMessage,
+            classificationX,
+            classificationY,
+            classificationTextPaint);
+//    canvas.drawText(
+//            handLocation,
+//            translateX(rightWrist.getPosition().x),
+//            translateY(rightWrist.getPosition().y),
+//            whitePaint);
 
 //VIJESH
 /*
@@ -201,6 +231,42 @@ public class PoseGraphic extends Graphic {
       }
     }
  */
+  }
+
+  private void handleVolumeControl(String str) {
+    float confidence = getConfidence(str);
+    String poseType = getPoseType(str);
+
+    if(confidence > 0.98){
+      if(poseType.contains("DOWN")){
+        audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND);
+      }else if(poseType.contains("UP")){
+        audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND);
+      }
+    }
+
+    Log.i("PoseGraphic","VIJESH: Pose:" + poseType + " Conf: " + confidence);
+  }
+
+  private String getPoseType(String type) {
+    String str = "";
+    if(type.length() > 5) {
+      int leftIndex = type.indexOf("<");
+      int rightIndex = type.indexOf(">");
+      str = type.substring(leftIndex+1, rightIndex);
+    }
+    return str;
+  }
+
+  private float getConfidence(String confidence) {
+    float conf = 0;
+    if(confidence.length() > 5) {
+      int leftIndex = confidence.indexOf("[");
+      int rightIndex = confidence.indexOf("]");
+      confidence = confidence.substring(leftIndex+1, rightIndex);
+      conf = Float.parseFloat(confidence);
+    }
+    return conf;
   }
 
   private void printMyData(String id_tag, PoseLandmark rightWrist) {

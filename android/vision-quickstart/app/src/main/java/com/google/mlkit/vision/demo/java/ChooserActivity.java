@@ -75,20 +75,24 @@ public final class ChooserActivity extends AppCompatActivity
     super.onCreate(savedInstanceState);
     Log.d(TAG, "onCreate");
 
-    setContentView(R.layout.activity_chooser);
-
-    // Set up ListView and Adapter
-    ListView listView = findViewById(R.id.test_activity_list_view);
-
-    MyArrayAdapter adapter = new MyArrayAdapter(this, android.R.layout.simple_list_item_2, CLASSES);
-    adapter.setDescriptionIds(DESCRIPTION_IDS);
-
-    listView.setAdapter(adapter);
-    listView.setOnItemClickListener(this);
+//    setContentView(R.layout.activity_chooser);
+//
+//    // Set up ListView and Adapter
+//    ListView listView = findViewById(R.id.test_activity_list_view);
+//
+//    MyArrayAdapter adapter = new MyArrayAdapter(this, android.R.layout.simple_list_item_2, CLASSES);
+//    adapter.setDescriptionIds(DESCRIPTION_IDS);
+//
+//    listView.setAdapter(adapter);
+//    listView.setOnItemClickListener(this);
 
     if (!allPermissionsGranted()) {
       getRuntimePermissions();
     }
+    Intent intent = new Intent(this, CameraXLivePreviewActivity.class);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK |Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    startActivity(intent);
+    finish();
   }
 
   @Override
