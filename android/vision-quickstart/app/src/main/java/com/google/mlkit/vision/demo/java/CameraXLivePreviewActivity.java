@@ -196,7 +196,20 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
     if (!allPermissionsGranted()) {
       getRuntimePermissions();
     }
+//    startMyCameraService();
+//    stopMyCameraService();
   }
+
+//  private void stopMyCameraService() {
+//    Intent serviceIntent = new Intent(this, MyCameraService.class);
+//    serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+//    ContextCompat.startForegroundService(this, serviceIntent);
+//  }
+//
+//  private void startMyCameraService() {
+//    Intent serviceIntent = new Intent(this, MyCameraService.class);
+//    stopService(serviceIntent);
+//  }
 
   @Override
   protected void onSaveInstanceState(@NonNull Bundle bundle) {
