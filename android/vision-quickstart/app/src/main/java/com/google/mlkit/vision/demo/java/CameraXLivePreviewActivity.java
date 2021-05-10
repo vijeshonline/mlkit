@@ -143,8 +143,8 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
       Log.d(TAG, "graphicOverlay is null");
     }
 
-    Spinner spinner = findViewById(R.id.spinner);
-    List<String> options = new ArrayList<>();
+//    Spinner spinner = findViewById(R.id.spinner);
+//    List<String> options = new ArrayList<>();
     /*
     options.add(OBJECT_DETECTION);
     options.add(OBJECT_DETECTION_CUSTOM);
@@ -157,19 +157,19 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
     options.add(CUSTOM_AUTOML_LABELING);
 
      */
-    options.add(POSE_DETECTION);
-    options.add(SELFIE_SEGMENTATION);
+//    options.add(POSE_DETECTION);
+//    options.add(SELFIE_SEGMENTATION);
+//
+//    // Creating adapter for spinner
+//    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
+//    // Drop down layout style - list view with radio button
+//    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//    // attaching data adapter to spinner
+//    spinner.setAdapter(dataAdapter);
+//    spinner.setOnItemSelectedListener(this);
 
-    // Creating adapter for spinner
-    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
-    // Drop down layout style - list view with radio button
-    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // attaching data adapter to spinner
-    spinner.setAdapter(dataAdapter);
-    spinner.setOnItemSelectedListener(this);
-
-    ToggleButton facingSwitch = findViewById(R.id.facing_switch);
-    facingSwitch.setOnCheckedChangeListener(this);
+//    ToggleButton facingSwitch = findViewById(R.id.facing_switch);
+//    facingSwitch.setOnCheckedChangeListener(this);
 
     new ViewModelProvider(this, AndroidViewModelFactory.getInstance(getApplication()))
         .get(CameraXViewModel.class)
@@ -183,15 +183,15 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
               }
             });
 
-    ImageView settingsButton = findViewById(R.id.settings_button);
-    settingsButton.setOnClickListener(
-        v -> {
-          Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
-          intent.putExtra(
-              SettingsActivity.EXTRA_LAUNCH_SOURCE,
-              SettingsActivity.LaunchSource.CAMERAX_LIVE_PREVIEW);
-          startActivity(intent);
-        });
+//    ImageView settingsButton = findViewById(R.id.settings_button);
+//    settingsButton.setOnClickListener(
+//        v -> {
+//          Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
+//          intent.putExtra(
+//              SettingsActivity.EXTRA_LAUNCH_SOURCE,
+//              SettingsActivity.LaunchSource.CAMERAX_LIVE_PREVIEW);
+//          startActivity(intent);
+//        });
 
     if (!allPermissionsGranted()) {
       getRuntimePermissions();
