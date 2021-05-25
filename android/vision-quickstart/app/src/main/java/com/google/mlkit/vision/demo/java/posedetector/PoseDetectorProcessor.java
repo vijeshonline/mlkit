@@ -17,6 +17,7 @@
 package com.google.mlkit.vision.demo.java.posedetector;
 
 import android.content.Context;
+import android.media.AudioManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -30,6 +31,7 @@ import com.google.mlkit.vision.pose.Pose;
 import com.google.mlkit.vision.pose.PoseDetection;
 import com.google.mlkit.vision.pose.PoseDetector;
 import com.google.mlkit.vision.pose.PoseDetectorOptionsBase;
+import com.google.mlkit.vision.pose.PoseLandmark;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +52,7 @@ public class PoseDetectorProcessor
   private final boolean isStreamMode;
   private final Context context;
   private final Executor classificationExecutor;
+  AudioManager audioManager;
 
   private PoseClassifierProcessor poseClassifierProcessor;
   /**
@@ -90,6 +93,7 @@ public class PoseDetectorProcessor
     this.isStreamMode = isStreamMode;
     this.context = context;
     classificationExecutor = Executors.newSingleThreadExecutor();
+    audioManager = (AudioManager) context.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
   }
 
   @Override
@@ -129,6 +133,38 @@ public class PoseDetectorProcessor
         new PoseGraphic(
             graphicOverlay, poseWithClassification.pose, showInFrameLikelihood, visualizeZ,
             rescaleZForVisualization, poseWithClassification.classificationResult));
+
+    processResult(poseWithClassification.pose);
+  }
+
+  private void processResult(Pose pose) {
+    Log.w(TAG, "VIJESH processResult");
+    List<PoseLandmark> landmarks = pose.getAllPoseLandmarks();
+    if (landmarks.isEmpty()) {
+      return;
+    }
+    PoseLandmark rightShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER);
+    PoseLandmark rightWrist = pose.getPoseLandmark(PoseLandmark.RIGHT_WRIST);
+
+//    String handLocation;
+//    String displayMessage = "Volume No-Change.....";
+    Log.i(TAG,"VIJESH: right Wrist: " + rightWrist.getPosition().y + " Shoulder: " +rightShoulder.getPosition().y );
+    if(rightWrist.getPosition().y < rightShoulder.getPosition().y){
+      Log.i("PoseGraphic","VIJESH: right hand is above >>>>>>>>>>>>>>>>>");
+//      handLocation = "ABOVE";
+//      displayMessage = "Volume UP";
+      audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND);
+    }else if(rightWrist.getPosition().y > (rightShoulder.getPosition().y)) {
+      if(rightWrist.getPosition().y < (rightShoulder.getPosition().y + 100)) {
+        Log.i(TAG, "VIJESH: right hand is BELOW SHOULDER >>>>>>>>>>>>>>>>>");
+//        handLocation = "BELOW";
+//        displayMessage = "Volume DOWN";
+        audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND);
+      }else{
+        Log.i(TAG, "VIJESH: right hand is very low");
+//        displayMessage = "Volume No-Change.....";
+      }
+    }
   }
 
   @Override
