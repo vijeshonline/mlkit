@@ -16,6 +16,8 @@
 
 package com.google.mlkit.vision.demo.java;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -88,12 +90,38 @@ public final class ChooserActivity extends AppCompatActivity
 
     if (!allPermissionsGranted()) {
       getRuntimePermissions();
+    }else {
+      startMyCameraService();
+//      startXLiveActivity(); //Starting activity based pose detection.
     }
+
+
+    finish();
+
+  }
+
+  //Starting activity based pose detection.
+  private void startXLiveActivity() {
     Intent intent = new Intent(this, CameraXLivePreviewActivity.class);
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK |Intent.FLAG_ACTIVITY_CLEAR_TOP);
     startActivity(intent);
     finish();
   }
+
+  //Starting service based pose detection.
+  private void startMyCameraService() {
+    Log.i(TAG,"VIJESH: startMyCameraService");
+    Intent serviceIntent = new Intent(this, MyCameraService.class);
+//    startService(serviceIntent);
+    ContextCompat.startForegroundService(this, serviceIntent);
+  }
+  private void stopMyCameraService() {
+    Log.i(TAG,"VIJESH: stopMyCameraService,,,,,,,,,,,,");
+    Intent serviceIntent = new Intent(this, MyCameraService.class);
+//    serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+    stopService(serviceIntent);
+  }
+
 
   @Override
   public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -183,4 +211,21 @@ public final class ChooserActivity extends AppCompatActivity
       this.descriptionIds = descriptionIds;
     }
   }
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+    //stopMyCameraService();
+  }
+
+  @Override
+  public void onRequestPermissionsResult(
+          int requestCode, String[] permissions, int[] grantResults) {
+    Log.i(TAG, "Permission granted!");
+    if (allPermissionsGranted()) {
+      startMyCameraService();
+//      startXLiveActivity(); //Starting activity based pose detection.
+    }
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+  }
+
 }
