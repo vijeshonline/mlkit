@@ -17,6 +17,7 @@
 package com.google.mlkit.vision.demo.java.posedetector;
 
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.util.Log;
 
@@ -25,6 +26,7 @@ import androidx.annotation.NonNull;
 import com.google.android.gms.tasks.Task;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.demo.GraphicOverlay;
+import com.google.mlkit.vision.demo.java.MyCameraService;
 import com.google.mlkit.vision.demo.java.VisionProcessorBase;
 import com.google.mlkit.vision.demo.java.posedetector.classification.PoseClassifierProcessor;
 import com.google.mlkit.vision.pose.Pose;
@@ -145,28 +147,38 @@ public class PoseDetectorProcessor
     }
     PoseLandmark rightShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER);
     PoseLandmark rightWrist = pose.getPoseLandmark(PoseLandmark.RIGHT_WRIST);
+    PoseLandmark leftShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER);
+    PoseLandmark leftWrist = pose.getPoseLandmark(PoseLandmark.LEFT_WRIST);
 
 //    String handLocation;
 //    String displayMessage = "Volume No-Change.....";
     Log.i(TAG,"VIJESH: right Wrist: " + rightWrist.getPosition().y + " Shoulder: " +rightShoulder.getPosition().y );
     if(rightWrist.getPosition().y < rightShoulder.getPosition().y){
-      Log.i("PoseGraphic","VIJESH: right hand is above >>>>>>>>>>>>>>>>>");
+      Log.i("PoseGraphic","VIJESH: right hand is above >>>>");
 //      handLocation = "ABOVE";
 //      displayMessage = "Volume UP";
       audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND);
     }else if(rightWrist.getPosition().y > (rightShoulder.getPosition().y)) {
       if(rightWrist.getPosition().y < (rightShoulder.getPosition().y + 100)) {
-        Log.i(TAG, "VIJESH: right hand is BELOW SHOULDER >>>>>>>>>>>>>>>>>");
+        Log.i(TAG, "VIJESH: right hand is BELOW SHOULDER >>>>>>>");
 //        handLocation = "BELOW";
 //        displayMessage = "Volume DOWN";
         audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND);
+      }else if(leftWrist.getPosition().y < (leftShoulder.getPosition().y)) {
+          Log.i(TAG, "VIJESH: LEFT hand is ABOVE ***********************************");
+          stopMyCameraService();
       }else{
         Log.i(TAG, "VIJESH: right hand is very low");
 //        displayMessage = "Volume No-Change.....";
       }
     }
   }
-
+  private void stopMyCameraService() {
+    Log.i(TAG,"VIJESH: stopMyCameraService,,,,,,,,,,,,");
+    Intent serviceIntent = new Intent(context, MyCameraService.class);
+//    serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+    context.stopService(serviceIntent);
+  }
   @Override
   protected void onFailure(@NonNull Exception e) {
     Log.e(TAG, "Pose detection failed!", e);
