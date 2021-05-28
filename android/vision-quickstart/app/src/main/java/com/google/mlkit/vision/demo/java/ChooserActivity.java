@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import androidx.appcompat.app.AppCompatActivity;
@@ -76,7 +77,7 @@ public final class ChooserActivity extends AppCompatActivity
     }
     super.onCreate(savedInstanceState);
     Log.d(TAG, "onCreate");
-
+//  VIJESH : activity is commented. We launch only camera service from here.
 //    setContentView(R.layout.activity_chooser);
 //
 //    // Set up ListView and Adapter
@@ -174,7 +175,13 @@ public final class ChooserActivity extends AppCompatActivity
       Log.i(TAG, "Permission granted: " + permission);
       return true;
     }
-    Log.i(TAG, "Permission NOT granted: " + permission);
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+      if (permission.contains("android.permission.FOREGROUND_SERVICE")) {
+        Log.i(TAG, "VIJESH >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  Proceeding, Though Permission not granted:  " + permission);
+        return true;
+      }
+    }
+    Log.i(TAG, "*******************************************Permission NOT granted:  " + permission);
     return false;
   }
 
