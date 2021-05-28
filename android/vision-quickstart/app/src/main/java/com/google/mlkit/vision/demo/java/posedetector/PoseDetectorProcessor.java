@@ -136,9 +136,12 @@ public class PoseDetectorProcessor
             graphicOverlay, poseWithClassification.pose, showInFrameLikelihood, visualizeZ,
             rescaleZForVisualization, poseWithClassification.classificationResult));
 
+//vijesh : The result of pose detection is handled here. This is because, we are not creating any view to handle it in pose graphic.
+    //VIJESH in case of activity based pose detection, logic is is posegraphic class. But for service we use below function only.
     processResult(poseWithClassification.pose);
   }
 
+  //TODO VIJESH: this funciton should be mofied to add more features.
   private void processResult(Pose pose) {
     Log.w(TAG, "VIJESH processResult");
     List<PoseLandmark> landmarks = pose.getAllPoseLandmarks();

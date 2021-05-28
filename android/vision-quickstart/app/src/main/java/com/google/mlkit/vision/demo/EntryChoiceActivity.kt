@@ -24,6 +24,7 @@ import com.google.mlkit.vision.demo.java.ChooserActivity
 class EntryChoiceActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
+    // VIJESH: we are calling java class only. Not kotlin code.
     super.onCreate(savedInstanceState)
       val intent = Intent(this@EntryChoiceActivity, ChooserActivity::class.java)
       intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
