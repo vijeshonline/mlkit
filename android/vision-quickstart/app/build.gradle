@@ -45,6 +45,15 @@ android {
     aaptOptions {
         noCompress "tflite"
     }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a'
+            universalApk true
+        }
+    }
 }
 
 repositories {
