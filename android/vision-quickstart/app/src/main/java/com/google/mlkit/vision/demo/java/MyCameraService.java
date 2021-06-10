@@ -98,6 +98,7 @@ public class MyCameraService extends LifecycleService implements ViewModelStoreO
         if (graphicOverlay == null) {
             Log.i("MyCameraService", "VIJESH graphicOverlay is null");
         }
+//      First try back camera. If any error try front camera.
         boolean backCameraStatus = true;
         try {
             cameraSelector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build();
