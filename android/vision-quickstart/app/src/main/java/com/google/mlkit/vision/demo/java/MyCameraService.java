@@ -77,7 +77,7 @@ public class MyCameraService extends LifecycleService implements ViewModelStoreO
     public void onCreate() {
         super.onCreate();
         //Toast.makeText(this, "Service was Created", Toast.LENGTH_LONG).show();
-        Log.e("MyCameraService","VIJESH: onCreate()");
+        Log.i("MyCameraService","VIJESH: onCreate()");
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
@@ -98,21 +98,8 @@ public class MyCameraService extends LifecycleService implements ViewModelStoreO
         if (graphicOverlay == null) {
             Log.i("MyCameraService", "VIJESH graphicOverlay is null");
         }
-        boolean backCameraStatus = true;
-        try {
-            cameraSelector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build();
-        }catch (Exception e){
-            Log.e("MyCameraService", "VIJESH >>>>>>>>>>>>>>>>>>>>>  BACK CAMERA FAILED");
-            backCameraStatus = false;
-        }
-        if(!backCameraStatus){
-            try {
-                cameraSelector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build();
-            }catch (Exception e){
-                Log.e("MyCameraService", "VIJESH >>>>>>>>>>>>>>>>>>>>>>>  FRONT CAMERA FAILED");
-                return;
-            }
-        }
+
+        cameraSelector = new CameraSelector.Builder().requireLensFacing(lensFacing).build();
 
         getLifecycle().addObserver(new LifecycleEventObserver() {
             @Override
