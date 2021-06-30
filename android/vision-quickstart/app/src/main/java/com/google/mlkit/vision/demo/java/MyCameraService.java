@@ -1,5 +1,6 @@
 package com.google.mlkit.vision.demo.java;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -9,6 +10,9 @@ import android.app.PendingIntent;
 import android.content.Intent;
 
 import android.graphics.PixelFormat;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -22,6 +26,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import androidx.camera.camera2.interop.Camera2CameraFilter;
+import androidx.camera.core.CameraFilter;
+import androidx.camera.core.CameraInfo;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.Preview;
@@ -48,6 +55,8 @@ import com.google.mlkit.vision.demo.java.posedetector.PoseDetectorProcessor;
 import com.google.mlkit.vision.demo.preference.PreferenceUtils;
 import com.google.mlkit.vision.pose.PoseDetectorOptionsBase;
 
+
+import java.util.LinkedHashMap;
 
 import static com.google.mlkit.vision.demo.preference.PreferenceUtils.getCameraXTargetResolution;
 //import android.support.annotation.Nullable;
@@ -98,22 +107,27 @@ public class MyCameraService extends LifecycleService implements ViewModelStoreO
         if (graphicOverlay == null) {
             Log.i("MyCameraService", "VIJESH graphicOverlay is null");
         }
-//      First try back camera. If any error try front camera.
-        boolean backCameraStatus = true;
-        try {
-            cameraSelector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build();
-        }catch (Exception e){
-            Log.e("MyCameraService", "VIJESH >>>>>>>>>>>>>>>>>>>>>  BACK CAMERA FAILED");
-            backCameraStatus = false;
-        }
-        if(!backCameraStatus){
-            try {
-                cameraSelector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build();
-            }catch (Exception e){
-                Log.e("MyCameraService", "VIJESH >>>>>>>>>>>>>>>>>>>>>>>  FRONT CAMERA FAILED");
-                return;
-            }
-        }
+
+        cameraSelector = getCameraSelector();
+
+////      First try back camera. If any error try front camera.
+//        boolean backCameraStatus = true;
+//        try {
+////            cameraSelector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build();
+//            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+//        }catch (Exception e){
+//            Log.e("MyCameraService", "VIJESH >>>>>>>>>>>>>>>>>>>>>  BACK CAMERA FAILED");
+//            backCameraStatus = false;
+//        }
+//        if(!backCameraStatus){
+//            try {
+////                cameraSelector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build();
+//                cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+//            }catch (Exception e){
+//                Log.e("MyCameraService", "VIJESH >>>>>>>>>>>>>>>>>>>>>>>  FRONT CAMERA FAILED");
+//                return;
+//            }
+//        }
 
         getLifecycle().addObserver(new LifecycleEventObserver() {
             @Override
@@ -135,6 +149,42 @@ public class MyCameraService extends LifecycleService implements ViewModelStoreO
                             bindAllCameraUseCases();
                         });
     }
+
+    @SuppressLint("UnsafeExperimentalUsageError")
+    private CameraSelector getCameraSelector() {
+        CameraManager manager = (CameraManager)getSystemService(CAMERA_SERVICE);
+        CameraSelector camsel = null;
+        
+        try {
+            Log.e (TAG, "VIJESH GetCameraSelector: camera count: " + manager.getCameraIdList().length);
+
+            for (String cameraId : manager.getCameraIdList()) {
+                CameraCharacteristics chars = manager.getCameraCharacteristics(cameraId);
+                Integer lens = chars.get(CameraCharacteristics.LENS_FACING);
+                if (lens == CameraMetadata.LENS_FACING_BACK){
+                    Log.e(TAG, "VIJESH: found back camera >>>>>>>>>>> ID:"+cameraId);
+                    camsel = CameraSelector.DEFAULT_BACK_CAMERA;
+                }else if (lens == CameraMetadata.LENS_FACING_FRONT){
+                    Log.e(TAG, "VIJESH: found front camera >>>>>>>>>>>ID:"+cameraId);
+                  camsel = CameraSelector.DEFAULT_FRONT_CAMERA;
+                }else{
+                    Log.e(TAG, "VIJESH: found EXTERNAL camera >>>>>>>>>>>ID:"+cameraId);
+                    Camera2CameraFilter.Camera2Filter c2filter = new MyC2ClassFilter(cameraId, chars);
+                    CameraFilter cameraFilter = Camera2CameraFilter.createCameraFilter(c2filter);
+                    camsel = new CameraSelector.Builder().addCameraFilter(cameraFilter).build();
+                }
+//                TO BE DELETED after testing
+//                Log.e(TAG, "VIJESH: C2FILTER camera >>>>>>>>>>>ID:"+cameraId);
+//                Camera2CameraFilter.Camera2Filter c2filter = new MyC2ClassFilter(cameraId, chars);
+//                CameraFilter cameraFilter = Camera2CameraFilter.createCameraFilter(c2filter);
+//                camsel = new CameraSelector.Builder().addCameraFilter(cameraFilter).build();
+            }
+        } catch (Exception e) {
+                e.printStackTrace();
+        }
+        return camsel;
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
@@ -277,5 +327,22 @@ public class MyCameraService extends LifecycleService implements ViewModelStoreO
     @Override
     public ViewModelProvider.Factory getDefaultViewModelProviderFactory() {
         return mFactory != null ? mFactory : (mFactory = new ViewModelProvider.AndroidViewModelFactory(getApplication()));
+    }
+}
+class MyC2ClassFilter implements Camera2CameraFilter.Camera2Filter
+{
+    LinkedHashMap<String, CameraCharacteristics> mylist = null;
+    String mystrs = null;
+    CameraCharacteristics mychar = null;
+    MyC2ClassFilter(String str, CameraCharacteristics chars){
+        mystrs = str;
+        mychar = chars;
+    }
+    @NonNull
+    @Override
+    public LinkedHashMap<String, CameraCharacteristics> filter(@NonNull LinkedHashMap<String, CameraCharacteristics> idCharacteristicsMap) {
+        mylist = new LinkedHashMap<String, CameraCharacteristics>();
+        mylist.put(mystrs, mychar);
+        return mylist;
     }
 }

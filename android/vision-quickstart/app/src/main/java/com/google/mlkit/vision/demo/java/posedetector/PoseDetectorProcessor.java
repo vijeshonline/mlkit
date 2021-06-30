@@ -106,7 +106,7 @@ public class PoseDetectorProcessor
 
   @Override
   protected Task<PoseWithClassification> detectInImage(InputImage image) {
-    Log.w(TAG, "VIJESH detectInImage");
+//    Log.w(TAG, "VIJESH detectInImage");
     return detector
         .process(image)
         .continueWith(
@@ -130,7 +130,7 @@ public class PoseDetectorProcessor
       @NonNull PoseWithClassification poseWithClassification,
       @NonNull GraphicOverlay graphicOverlay) {
 
-    Log.w(TAG, "VIJESH onsuccess");
+//    Log.w(TAG, "VIJESH onsuccess");
     graphicOverlay.add(
         new PoseGraphic(
             graphicOverlay, poseWithClassification.pose, showInFrameLikelihood, visualizeZ,
