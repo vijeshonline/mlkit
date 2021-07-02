@@ -20,6 +20,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.inputmethod.BaseInputConnection;
 
 import androidx.annotation.NonNull;
 
@@ -56,7 +58,13 @@ public class PoseDetectorProcessor
   private final Executor classificationExecutor;
   AudioManager audioManager;
 
+  private String COMMAND_VOLUME_UP = "input keyevent 24";
+  private String COMMAND_VOLUME_DOWN = "input keyevent 25";
+  private String COMMAND_CHANNEL_UP = "input keyevent 166";
+  private String COMMAND_CHANNEL_DOWN = "input keyevent 167";
+
   private PoseClassifierProcessor poseClassifierProcessor;
+
   /**
    * Internal class to hold Pose and classification results.
    */
@@ -79,13 +87,13 @@ public class PoseDetectorProcessor
   }
 
   public PoseDetectorProcessor(
-      Context context,
-      PoseDetectorOptionsBase options,
-      boolean showInFrameLikelihood,
-      boolean visualizeZ,
-      boolean rescaleZForVisualization,
-      boolean runClassification,
-      boolean isStreamMode) {
+          Context context,
+          PoseDetectorOptionsBase options,
+          boolean showInFrameLikelihood,
+          boolean visualizeZ,
+          boolean rescaleZForVisualization,
+          boolean runClassification,
+          boolean isStreamMode) {
     super(context);
     this.showInFrameLikelihood = showInFrameLikelihood;
     this.visualizeZ = visualizeZ;
@@ -108,33 +116,33 @@ public class PoseDetectorProcessor
   protected Task<PoseWithClassification> detectInImage(InputImage image) {
 //    Log.w(TAG, "VIJESH detectInImage");
     return detector
-        .process(image)
-        .continueWith(
-            classificationExecutor,
-            task -> {
-              Pose pose = task.getResult();
-              List<String> classificationResult = new ArrayList<>();
-              if (runClassification) {
-                Log.w(TAG, "VIJESH : Classifying......");
-                if (poseClassifierProcessor == null) {
-                  poseClassifierProcessor = new PoseClassifierProcessor(context, isStreamMode);
-                }
-                classificationResult = poseClassifierProcessor.getPoseResult(pose);
-              }
-              return new PoseWithClassification(pose, classificationResult);
-            });
+            .process(image)
+            .continueWith(
+                    classificationExecutor,
+                    task -> {
+                      Pose pose = task.getResult();
+                      List<String> classificationResult = new ArrayList<>();
+                      if (runClassification) {
+                        Log.w(TAG, "VIJESH : Classifying......");
+                        if (poseClassifierProcessor == null) {
+                          poseClassifierProcessor = new PoseClassifierProcessor(context, isStreamMode);
+                        }
+                        classificationResult = poseClassifierProcessor.getPoseResult(pose);
+                      }
+                      return new PoseWithClassification(pose, classificationResult);
+                    });
   }
 
   @Override
   protected void onSuccess(
-      @NonNull PoseWithClassification poseWithClassification,
-      @NonNull GraphicOverlay graphicOverlay) {
+          @NonNull PoseWithClassification poseWithClassification,
+          @NonNull GraphicOverlay graphicOverlay) {
 
 //    Log.w(TAG, "VIJESH onsuccess");
     graphicOverlay.add(
-        new PoseGraphic(
-            graphicOverlay, poseWithClassification.pose, showInFrameLikelihood, visualizeZ,
-            rescaleZForVisualization, poseWithClassification.classificationResult));
+            new PoseGraphic(
+                    graphicOverlay, poseWithClassification.pose, showInFrameLikelihood, visualizeZ,
+                    rescaleZForVisualization, poseWithClassification.classificationResult));
 
 //vijesh : The result of pose detection is handled here. This is because, we are not creating any view to handle it in pose graphic.
     //VIJESH in case of activity based pose detection, logic is is posegraphic class. But for service we use below function only.
@@ -153,38 +161,63 @@ public class PoseDetectorProcessor
     PoseLandmark leftShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER);
     PoseLandmark leftWrist = pose.getPoseLandmark(PoseLandmark.LEFT_WRIST);
 
+    if (audioManager.isVolumeFixed()) {
+      Log.e(TAG, "VIJESH: Volume FIXED. May not change.... >>>>>>>");
+    }
 //    String handLocation;
 //    String displayMessage = "Volume No-Change.....";
-    Log.i(TAG,"VIJESH: right Wrist: " + rightWrist.getPosition().y + " Shoulder: " +rightShoulder.getPosition().y );
-    if(rightWrist.getPosition().y < rightShoulder.getPosition().y){
-      Log.i("PoseGraphic","VIJESH: right hand is above >>>>");
+    Log.i(TAG, "VIJESH: right Wrist: " + rightWrist.getPosition().y + " Shoulder: " + rightShoulder.getPosition().y);
+    if (rightWrist.getPosition().y < rightShoulder.getPosition().y) {
+      Log.i("PoseGraphic", "VIJESH: right hand is above >>>>");
 //      handLocation = "ABOVE";
 //      displayMessage = "Volume UP";
-      audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND);
-    }else if(rightWrist.getPosition().y > (rightShoulder.getPosition().y)) {
-      if(rightWrist.getPosition().y < (rightShoulder.getPosition().y + 100)) {
+      audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND | AudioManager.FLAG_SHOW_UI);
+      return; //don't process further commands
+    } else if (rightWrist.getPosition().y > (rightShoulder.getPosition().y)) {
+      if (rightWrist.getPosition().y < (rightShoulder.getPosition().y + 100)) {
         Log.i(TAG, "VIJESH: right hand is BELOW SHOULDER >>>>>>>");
 //        handLocation = "BELOW";
 //        displayMessage = "Volume DOWN";
-        audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND);
-      }else if(leftWrist.getPosition().y < (leftShoulder.getPosition().y)) {
-          Log.i(TAG, "VIJESH: LEFT hand is ABOVE ***********************************");
-          stopMyCameraService();
-      }else{
-        Log.i(TAG, "VIJESH: right hand is very low");
-//        displayMessage = "Volume No-Change.....";
+        audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND | AudioManager.FLAG_SHOW_UI);
+        return;//don't process further commands
+      } else {
+        Log.i(TAG, "VIJESH: right hand is LOW >>>>>>>");
       }
     }
+
+    if (leftWrist.getPosition().y < (leftShoulder.getPosition().y)) {
+        Log.i(TAG, "VIJESH: LEFT hand is ABOVE ***********************************");
+        sendKeyEvent(COMMAND_CHANNEL_UP);
+//        stopMyCameraService();
+    } else if (leftWrist.getPosition().y > (leftShoulder.getPosition().y)) {
+        if (leftWrist.getPosition().y < (leftShoulder.getPosition().y + 100)) {
+          Log.i(TAG, "VIJESH: left hand at SHOULDER >>>>>>>");
+          sendKeyEvent(COMMAND_CHANNEL_DOWN);
+        } else {
+          Log.i(TAG, "VIJESH: left hand is LOW >>>>>>>");
+        }
+    }
   }
-  private void stopMyCameraService() {
-    Log.i(TAG,"VIJESH: stopMyCameraService,,,,,,,,,,,,");
-    Intent serviceIntent = new Intent(context, MyCameraService.class);
+
+  private void sendKeyEvent(String command) {
+    Log.e(TAG, "VIJESH >>>> sending command: " + command);
+    try {
+      Runtime.getRuntime().exec(command);
+    } catch (Exception e) {
+      Log.e(TAG, "VIJESH >>>> Failed to send command: " + command);
+      e.printStackTrace();
+    }
+  }
+
+  private void stopMyCameraService () {
+      Log.i(TAG, "VIJESH: stopMyCameraService,,,,,,,,,,,,");
+      Intent serviceIntent = new Intent(context, MyCameraService.class);
 //    serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
-    context.stopService(serviceIntent);
+      context.stopService(serviceIntent);
+    }
+    @Override
+    protected void onFailure (@NonNull Exception e){
+      Log.e(TAG, "VIJESH Pose detection failed!", e);
+    }
   }
-  @Override
-  protected void onFailure(@NonNull Exception e) {
-    Log.e(TAG, "Pose detection failed!", e);
-    Log.e(TAG, "VIJESH Pose detection failed!", e);
-  }
-}
+
