@@ -16,6 +16,7 @@
 
 package com.google.mlkit.vision.demo.java.posedetector;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** A processor to run pose detector. */
 public class PoseDetectorProcessor
@@ -56,12 +58,32 @@ public class PoseDetectorProcessor
   private final boolean isStreamMode;
   private final Context context;
   private final Executor classificationExecutor;
-  AudioManager audioManager;
 
-  private String COMMAND_VOLUME_UP = "input keyevent 24";
-  private String COMMAND_VOLUME_DOWN = "input keyevent 25";
-  private String COMMAND_CHANNEL_UP = "input keyevent 166";
-  private String COMMAND_CHANNEL_DOWN = "input keyevent 167";
+
+//
+//  private String COMMAND_VOLUME_UP = "input keyevent 24";
+//  private String COMMAND_VOLUME_DOWN = "input keyevent 25";
+//  private String COMMAND_CHANNEL_UP = "input keyevent 166";
+//  private String COMMAND_CHANNEL_DOWN = "input keyevent 167";
+  private int KEYCODE_VOL_UP = 24;
+  private int KEYCODE_VOL_DOWN = 25;
+  private int KEYCODE_CHANNEL_UP = 166;
+  private int KEYCODE_CHANNEL_DOWN = 167;
+  private static final int VOLUME_INCREASE = 1;
+  private static final int VOLUME_DECREASE = -1;
+  private static final int VOLUME_NOCHANGE = 0;
+  private static final int CHANNEL_UP = 1;
+  private static final int CHANNEL_DOWN = -1;
+  private static final int CHANNEL_NOCHANGE = 0;
+
+  AudioManager audioManager;
+  private Thread mVolumeThread = null;
+  Integer mVolStatus = VOLUME_NOCHANGE;
+  boolean mVolThreadRunning = true;
+
+  private Thread mChannelThread = null;
+  Integer mChannelStatus = CHANNEL_NOCHANGE;
+  boolean mChannelThreadRunning = true;
 
   private PoseClassifierProcessor poseClassifierProcessor;
 
@@ -104,10 +126,71 @@ public class PoseDetectorProcessor
     this.context = context;
     classificationExecutor = Executors.newSingleThreadExecutor();
     audioManager = (AudioManager) context.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+
+    startVolThread();
+    startChannelThread();
+  }
+
+  private void startVolThread() {
+    mVolumeThread = new Thread(new Runnable() {
+      public void run() {
+        while(mVolThreadRunning) {
+          try {
+            Thread.sleep(500);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+          Log.i(TAG,"VIJESH VOLUME Thread: mVolStatus: "+mVolStatus);
+          switch (mVolStatus) {
+            case VOLUME_INCREASE:
+              audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND | AudioManager.FLAG_SHOW_UI);
+              break;
+            case VOLUME_DECREASE:
+              audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND | AudioManager.FLAG_SHOW_UI);
+              break;
+            case VOLUME_NOCHANGE:
+              break;
+          }
+        }
+        Log.e(TAG, "VIJESH exit thread !!!!!!!!!!!!");
+      }
+    });
+    mVolumeThread.start();
+  }
+
+  private void startChannelThread() {
+    mChannelThread = new Thread(new Runnable() {
+      public void run() {
+        while(mChannelThreadRunning) {
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+          Log.i(TAG,"VIJESH CHANNEL Thread: mChannelStatus: "+ mChannelStatus);
+          switch (mChannelStatus) {
+            case CHANNEL_UP:
+              sendKeyEvent(KEYCODE_CHANNEL_UP);
+              break;
+            case CHANNEL_DOWN:
+              sendKeyEvent(KEYCODE_CHANNEL_DOWN);
+              break;
+            case CHANNEL_NOCHANGE:
+              break;
+          }
+        }
+        Log.e(TAG, "VIJESH Exit channel thread !!!!!!!!!!!!");
+      }
+    });
+    mChannelThread.start();
   }
 
   @Override
   public void stop() {
+    mVolThreadRunning = false;
+    mChannelThreadRunning = false;
+    mChannelThread = null;
+    mVolumeThread = null;
     super.stop();
     detector.close();
   }
@@ -151,7 +234,7 @@ public class PoseDetectorProcessor
 
   //TODO VIJESH: this funciton should be mofied to add more features.
   private void processResult(Pose pose) {
-    Log.w(TAG, "VIJESH processResult");
+    Log.i(TAG, "VIJESH processResult");
     List<PoseLandmark> landmarks = pose.getAllPoseLandmarks();
     if (landmarks.isEmpty()) {
       return;
@@ -162,51 +245,57 @@ public class PoseDetectorProcessor
     PoseLandmark leftWrist = pose.getPoseLandmark(PoseLandmark.LEFT_WRIST);
 
     if (audioManager.isVolumeFixed()) {
-      Log.e(TAG, "VIJESH: Volume FIXED. May not change.... >>>>>>>");
+      Log.e(TAG, "VIJESH: isVolumeFixed() true. Volume FIXED. May not change.... >>>>>>>");
     }
 //    String handLocation;
 //    String displayMessage = "Volume No-Change.....";
     Log.i(TAG, "VIJESH: right Wrist: " + rightWrist.getPosition().y + " Shoulder: " + rightShoulder.getPosition().y);
-    if (rightWrist.getPosition().y < rightShoulder.getPosition().y) {
+    if (rightWrist.getPosition().y < rightShoulder.getPosition().y - 100) {
       Log.i("PoseGraphic", "VIJESH: right hand is above >>>>");
-//      handLocation = "ABOVE";
-//      displayMessage = "Volume UP";
-      audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND | AudioManager.FLAG_SHOW_UI);
+      mVolStatus = VOLUME_INCREASE;
       return; //don't process further commands
-    } else if (rightWrist.getPosition().y > (rightShoulder.getPosition().y)) {
+    } else if (rightWrist.getPosition().y > (rightShoulder.getPosition().y - 20)) {
       if (rightWrist.getPosition().y < (rightShoulder.getPosition().y + 100)) {
-        Log.i(TAG, "VIJESH: right hand is BELOW SHOULDER >>>>>>>");
-//        handLocation = "BELOW";
-//        displayMessage = "Volume DOWN";
-        audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND | AudioManager.FLAG_SHOW_UI);
+        Log.i(TAG, "VIJESH: right hand is AT SHOULDER >>>>>>>");
+        mVolStatus = VOLUME_DECREASE;
         return;//don't process further commands
       } else {
-        Log.i(TAG, "VIJESH: right hand is LOW >>>>>>>");
+        mVolStatus = VOLUME_NOCHANGE;
+//        Log.i(TAG, "VIJESH: right hand is LOW >>>>>>>");
       }
+    }else{
+      mVolStatus = VOLUME_NOCHANGE;
     }
 
-    if (leftWrist.getPosition().y < (leftShoulder.getPosition().y)) {
+    if (leftWrist.getPosition().y < leftShoulder.getPosition().y - 100) {
         Log.i(TAG, "VIJESH: LEFT hand is ABOVE ***********************************");
-        sendKeyEvent(COMMAND_CHANNEL_UP);
-//        stopMyCameraService();
-    } else if (leftWrist.getPosition().y > (leftShoulder.getPosition().y)) {
+        mChannelStatus = CHANNEL_UP;
+    } else if (leftWrist.getPosition().y > leftShoulder.getPosition().y - 20) {
         if (leftWrist.getPosition().y < (leftShoulder.getPosition().y + 100)) {
-          Log.i(TAG, "VIJESH: left hand at SHOULDER >>>>>>>");
-          sendKeyEvent(COMMAND_CHANNEL_DOWN);
+          Log.i(TAG, "VIJESH: left hand at SHOULDER *******");
+          mChannelStatus = CHANNEL_DOWN;
         } else {
-          Log.i(TAG, "VIJESH: left hand is LOW >>>>>>>");
+//          Log.i(TAG, "VIJESH: left hand is LOW *****");
+          mChannelStatus = CHANNEL_NOCHANGE;
         }
     }
   }
 
-  private void sendKeyEvent(String command) {
-    Log.e(TAG, "VIJESH >>>> sending command: " + command);
-    try {
-      Runtime.getRuntime().exec(command);
-    } catch (Exception e) {
-      Log.e(TAG, "VIJESH >>>> Failed to send command: " + command);
-      e.printStackTrace();
-    }
+//  private void sendKeyEvent(String command) {
+//    Log.e(TAG, "VIJESH >>>> sending command: " + command);
+//    try {
+//      Runtime.getRuntime().exec(command);
+//    } catch (Exception e) {
+//      Log.e(TAG, "VIJESH >>>> Failed to send command: " + command);
+//      e.printStackTrace();
+//    }
+//  }
+  private void sendKeyEvent(int keycode) {
+    Intent intent = new Intent("com.sony.dtv.intent.action.KEY_CODE");
+    intent.setPackage("com.sony.dtv.tvx");
+    intent.putExtra("KeyCode", keycode);
+    Log.i(TAG,"VIJESH Sending keycode to TVX: "+keycode);
+    context.sendBroadcast(intent);
   }
 
   private void stopMyCameraService () {
