@@ -249,47 +249,70 @@ public class PoseDetectorProcessor
     }
 //    String handLocation;
 //    String displayMessage = "Volume No-Change.....";
+    float rhy = rightWrist.getPosition().y;
+    float rhx = rightWrist.getPosition().x;
+    float rsy = rightShoulder.getPosition().y;
+    float rsx = rightShoulder.getPosition().x;
+
+    if(rhx > rsx){
+//      Log.e(TAG, "VIJESH:1 CHANNEL rhy"+rhy+"  rsy:"+rsy);
+      if(rhy < (rsy + 100)){
+        Log.i(TAG, "VIJESH:1 CHANNEL UP >>>>>>>>>>>>>>>");
+        mChannelStatus = CHANNEL_UP;
+      }else if(rhy < (rsy + 200)){
+        Log.i(TAG, "VIJESH:1 CHANNEL DOWN >>>>");
+        mChannelStatus = CHANNEL_DOWN;
+      }else{
+        Log.i(TAG, "VIJESH:1 CHANNEL No change");
+        mChannelStatus = CHANNEL_NOCHANGE;
+      }
+    }else{
+      Log.i(TAG, "VIJESH:1 CHANNEL No change");
+      mChannelStatus = CHANNEL_NOCHANGE;
+    }
+
+
     Log.i(TAG, "VIJESH: right Wrist: " + rightWrist.getPosition().y + " Shoulder: " + rightShoulder.getPosition().y);
-    if (rightWrist.getPosition().y < rightShoulder.getPosition().y - 100) {
-      Log.i("PoseGraphic", "VIJESH: right hand is above >>>>");
-      mVolStatus = VOLUME_INCREASE;
-      return; //don't process further commands
-    } else if (rightWrist.getPosition().y > (rightShoulder.getPosition().y - 20)) {
-      if (rightWrist.getPosition().y < (rightShoulder.getPosition().y + 100)) {
-        Log.i(TAG, "VIJESH: right hand is AT SHOULDER >>>>>>>");
-        mVolStatus = VOLUME_DECREASE;
-        return;//don't process further commands
+    if(rhx < rsx) {
+      if (rightWrist.getPosition().y < rightShoulder.getPosition().y - 50) {
+        Log.i(TAG, "VIJESH:1 VOL UP >>>>>>>>>>>>>>>>>");
+        mVolStatus = VOLUME_INCREASE;
+        return; //don't process further commands
+      } else if (rightWrist.getPosition().y > (rightShoulder.getPosition().y - 20)) {
+        if (rightWrist.getPosition().y < (rightShoulder.getPosition().y + 100)) {
+          Log.i(TAG, "VIJESH:1 VOL DOWN >>>>>>>");
+          mVolStatus = VOLUME_DECREASE;
+          return;//don't process further commands
+        } else {
+          mVolStatus = VOLUME_NOCHANGE;
+          Log.i(TAG, "VIJESH:1 VOL NO-CHANGE");
+        }
       } else {
         mVolStatus = VOLUME_NOCHANGE;
-//        Log.i(TAG, "VIJESH: right hand is LOW >>>>>>>");
+        Log.i(TAG, "VIJESH:1 VOL NO-CHANGE");
       }
     }else{
       mVolStatus = VOLUME_NOCHANGE;
+      Log.i(TAG, "VIJESH:1 VOL NO-CHANGE");
     }
 
-    if (leftWrist.getPosition().y < leftShoulder.getPosition().y - 100) {
-        Log.i(TAG, "VIJESH: LEFT hand is ABOVE ***********************************");
-        mChannelStatus = CHANNEL_UP;
-    } else if (leftWrist.getPosition().y > leftShoulder.getPosition().y - 20) {
-        if (leftWrist.getPosition().y < (leftShoulder.getPosition().y + 100)) {
-          Log.i(TAG, "VIJESH: left hand at SHOULDER *******");
-          mChannelStatus = CHANNEL_DOWN;
-        } else {
-//          Log.i(TAG, "VIJESH: left hand is LOW *****");
-          mChannelStatus = CHANNEL_NOCHANGE;
-        }
-    }
+
+//    Left hand up/down for channel change.
+//    if (leftWrist.getPosition().y < leftShoulder.getPosition().y - 100) {
+//        Log.i(TAG, "VIJESH: LEFT hand is ABOVE ***********************************");
+//        mChannelStatus = CHANNEL_UP;
+//    } else if (leftWrist.getPosition().y > leftShoulder.getPosition().y - 20) {
+//        if (leftWrist.getPosition().y < (leftShoulder.getPosition().y + 100)) {
+//          Log.i(TAG, "VIJESH: left hand at SHOULDER *******");
+//          mChannelStatus = CHANNEL_DOWN;
+//        } else {
+////          Log.i(TAG, "VIJESH: left hand is LOW *****");
+//          mChannelStatus = CHANNEL_NOCHANGE;
+//        }
+//    }
   }
 
-//  private void sendKeyEvent(String command) {
-//    Log.e(TAG, "VIJESH >>>> sending command: " + command);
-//    try {
-//      Runtime.getRuntime().exec(command);
-//    } catch (Exception e) {
-//      Log.e(TAG, "VIJESH >>>> Failed to send command: " + command);
-//      e.printStackTrace();
-//    }
-//  }
+
   private void sendKeyEvent(int keycode) {
     Intent intent = new Intent("com.sony.dtv.intent.action.KEY_CODE");
     intent.setPackage("com.sony.dtv.tvx");
